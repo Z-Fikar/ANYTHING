@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Windows.Forms;
 
 namespace WindowsFormsApp1
@@ -10,18 +11,44 @@ namespace WindowsFormsApp1
             InitializeComponent();
         }
 
-        IFormatProvider currentCulture = System.Globalization.CultureInfo.CurrentCulture;
+        CultureInfo currentCulture = CultureInfo.CurrentCulture;
+        //CultureInfo currentCulture = CultureInfo.GetCultureInfo("id-ID");
+
+        private double ExtractFromThousandSeparator(string textNumber)
+        {
+            var isDouble = double.TryParse(textNumber, NumberStyles.Number,
+                currentCulture, out double number);
+            if (isDouble)
+                return number;
+            return 0;
+        }
 
         private string ApplyThousandSeparator(string textNumber)
         {
+            string comma = currentCulture.NumberFormat.NumberDecimalSeparator;
+            string separator = currentCulture.NumberFormat.NumberGroupSeparator;
+
+            // if lastChar is comma, do nothing. Allowing input another number
             var lastChar = textNumber.Substring(textNumber.Length > 0 ? textNumber.Length - 1 : 0);
-            if (lastChar == ".")
+            if (lastChar == comma)
                 return textNumber;
 
-            var isDouble = double.TryParse(textNumber, out double number);
+            // remove any separators after comma
+            var splitted = textNumber.Split(comma.ToCharArray(),
+                StringSplitOptions.RemoveEmptyEntries);
+            if (splitted.Length > 1)
+            {
+                splitted[1] = splitted[1].Replace(separator, "");
+                textNumber = string.Join(comma, splitted);
+            }
+
+            // apply separator if text is double
+            var isDouble = double.TryParse(textNumber, NumberStyles.Number,
+                currentCulture, out double number);
             if (isDouble)
                 return string.Format(currentCulture, "{0:#,##0.####}", number);
 
+            // if not, apply nothing
             return textNumber;
         }
 
@@ -41,14 +68,15 @@ namespace WindowsFormsApp1
         private void TextBox_KeyPress(object sender, KeyPressEventArgs e)
         {
             TextBox textBox = (TextBox)sender;
+            char comma = char.Parse(currentCulture.NumberFormat.NumberDecimalSeparator);
 
             // Set only handling key control and number decimal
             if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar)
-                && (e.KeyChar != '.') && (e.KeyChar != '-'))
+                && (e.KeyChar != comma) && (e.KeyChar != '-'))
                 e.Handled = true;
 
             // Only allow one decimal point
-            if ((e.KeyChar == '.') && (textBox.Text.IndexOf('.') > -1))
+            if ((e.KeyChar == comma) && (textBox.Text.IndexOf(comma) > -1))
                 e.Handled = true;
 
             // allow one negative sign only if the caret is at the front
@@ -62,6 +90,15 @@ namespace WindowsFormsApp1
             textBox1.TextChanged += TextBox_TextChanged;
             textBox1.KeyPress -= TextBox_KeyPress;
             textBox1.KeyPress += TextBox_KeyPress;
+        }
+
+        private void Label1_Click(object sender, EventArgs e)
+        {
+            string comma = currentCulture.NumberFormat.NumberDecimalSeparator;
+            string separator = currentCulture.NumberFormat.NumberGroupSeparator;
+
+            label1.Text = separator + " | " + comma + " | "
+                + ExtractFromThousandSeparator(textBox1.Text).ToString();
         }
     }
 }
