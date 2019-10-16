@@ -28,8 +28,14 @@ namespace WindowsFormsApp1
         private void TextBox_TextChanged(object sender, EventArgs e)
         {
             TextBox textBox = (TextBox)sender;
+            var curPos = textBox.SelectionStart;
+            var diff = textBox.TextLength;  // anticipate new thousand separator
+
             textBox.Text = ApplyThousandSeparator(textBox.Text);
-            textBox.SelectionStart = textBox.TextLength;
+
+            diff -= textBox.TextLength;
+            curPos -= diff;
+            textBox.SelectionStart = curPos < 0 ? 0 : curPos;
         }
 
         private void TextBox_KeyPress(object sender, KeyPressEventArgs e)
