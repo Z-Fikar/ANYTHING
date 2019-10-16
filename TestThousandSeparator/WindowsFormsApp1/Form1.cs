@@ -41,16 +41,17 @@ namespace WindowsFormsApp1
         private void TextBox_KeyPress(object sender, KeyPressEventArgs e)
         {
             TextBox textBox = (TextBox)sender;
+
             // Set only handling key control and number decimal
             if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar)
                 && (e.KeyChar != '.') && (e.KeyChar != '-'))
                 e.Handled = true;
 
-            // only allow one decimal point
+            // Only allow one decimal point
             if ((e.KeyChar == '.') && (textBox.Text.IndexOf('.') > -1))
                 e.Handled = true;
 
-            // allow negative sign when caret at the front and not in text
+            // allow one negative sign only if the caret is at the front
             if (e.KeyChar == '-' && (textBox.SelectionStart != 0 || textBox.Text.Contains("-")))
                 e.Handled = true;
         }
